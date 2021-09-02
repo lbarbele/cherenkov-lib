@@ -1,26 +1,31 @@
 BINDIR := bin
 OBJDIR := obj
-LIBDIR := lib
 SRCDIR := src
 
-DIRECTORIES := $(BINDIR) $(OBJDIR) $(LIBDIR)
+DIRECTORIES := $(BINDIR) $(OBJDIR)
 
-vpath %.cpp $(SRCDIR) # search for .cpp files under ./src
-vpath % $(BINDIR)     # search for other files under ./bin
+#vpath %.cpp $(SRCDIR) # search for .cpp files under ./src
+#vpath % $(BINDIR)     # search for other files under ./bin
 
 CXXFLAGS += `root-config --cflags`
 ROOTLIBS =  `root-config --libs`
 
-default:
-	@echo Starting parallel compilation
-	@make -j4 test
+all: lib demo
+lib: $(BINDIR)/libcerang.so
+demo: $(BINDIR)/demo
 
-test: $(OBJDIR)/test.o $(OBJDIR)/cerang.o | $(BINDIR)
-	$(CXX) $^ -o $(BINDIR)/$@ $(ROOTLIBS)
+$(BINDIR)/demo: $(OBJDIR)/demo.o $(BINDIR)/libcerang.so | $(BINDIR)
+	$(CXX) $^ -o $@ $(ROOTLIBS)
 
-$(OBJDIR)/%.o: %.cpp $(SRCDIR)/*.h | $(OBJDIR)
+$(BINDIR)/libcerang.so: $(OBJDIR)/cerang.o | $(BINDIR)
+	$(CXX) -shared $< -o $@ 
+	
+$(OBJDIR)/demo.o: $(SRCDIR)/demo.cpp | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+$(OBJDIR)/cerang.o: $(SRCDIR)/cerang.cpp $(SRCDIR)/cerang.h | $(OBJDIR)
+	$(CXX) $(CXXFLAGS) -fpic -c $< -o $@
+	
 $(DIRECTORIES):
 	mkdir -p $@
 
