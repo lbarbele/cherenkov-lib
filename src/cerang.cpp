@@ -2,6 +2,11 @@
 
 #include <cmath>
 #include <iostream>
+#include <array>
+
+//
+// Definition of some constants
+//
 
 static const double kPiOnTwo = std::asin(1.0);
 static const double kPi = std::acos(-1.0);
@@ -10,6 +15,50 @@ static const double kPiPlusOne = kPi + 1;
 //
 // Helper functions
 //
+
+static
+double
+FunctionK(const double theta,
+          const std::array<double, 4> parameters);
+
+static
+double
+SmallAngleIntegral(const double lowAngle,
+                   const double highAngle,
+                   const double thetaEm,
+                   const std::array<double, 4> parameters,
+                   const int numberOfTerms = 10);
+
+static
+double
+LargeAngleIntegral(const double lowAngle,
+                   const double highAngle,
+                   const double thetaEm,
+                   const std::array<double, 4> parameters,
+                   const double defaultStepSize = 1e-3);
+
+static
+double
+CherenkovUnnormalizedDensity(const double theta,
+                             const double thetaEm, 
+                             const std::array<double,4> parameters);
+
+static                             
+double
+CherenkovUnnormalizedIntegral(const double lowAngle,
+                              const double highAngle,
+                              const double thetaEm, 
+                              const std::array<double,4> parameters);
+
+static                            
+std::array<double, 4> 
+CherenkovParameters(const double showerAge,
+                    const double refractiveIndex,
+                    const double showerEnergyTeV);
+
+
+// Declaration
+
 double
 FunctionK(const double theta,
           const std::array<double, 4> parameters)
@@ -50,7 +99,7 @@ SmallAngleIntegral(const double lowAngle,
   double factorial = 1;
   double multiplier[4] = {cosThetaEm, sinThetaEm, -cosThetaEm, -sinThetaEm};
 
-  for (int k = 1; k <= 2; k++) {
+  for (int k = 1; k <= numberOfTerms; k++) {
     powerLow  *= deltaLow;
     powerHigh *= deltaHigh;
     factorial *= k;
@@ -161,6 +210,8 @@ CherenkovUnnormalizedIntegral(const double lowAngle,
 
   if (lowAngle > highAngle) {
     return -CherenkovUnnormalizedIntegral(highAngle, lowAngle, thetaEm, parameters);
+  } else if (lowAngle == highAngle) {
+  	return 0.;
   } else if (highAngle < 0) {
     return 0.;
   } else if (lowAngle < 0) {
@@ -175,11 +226,13 @@ CherenkovUnnormalizedIntegral(const double lowAngle,
     return LargeAngleIntegral(lowAngle, highAngle, thetaEm, parameters);
   } else {
     // integration interval is contained in [0, "infinity")
-    // so we split the compmutation to fall into both cases above separately
+    // so we split the computation in two parts, each correspoding to one of the cases above
     return SmallAngleIntegral(lowAngle, thetaEm, thetaEm, parameters)
       + LargeAngleIntegral(thetaEm, highAngle, thetaEm, parameters);
   }
 }
+
+
 
 //
 // Functions defined in the API
@@ -215,16 +268,16 @@ CherenkovParameters(const double showerAge,
   double logAge = std::log(showerAge);
 
   // Parametrization for primary gamma:
-  nu = 0.34329 * std::pow(delta, -0.10683) + 1.46852 * logAge;
-  t1 =  1.4053 * std::pow(delta, 0.32382) - 0.048841 * logAge;
-  t2 = t1 * (0.95734 + 0.26472 * showerAge);
-  ep = 0.0031206;
+//  nu = 0.34329 * std::pow(delta, -0.10683) + 1.46852 * logAge;
+//  t1 =  1.4053 * std::pow(delta, 0.32382) - 0.048841 * logAge;
+//  t2 = t1 * (0.95734 + 0.26472 * showerAge);
+//  ep = 0.0031206;
 
   // Parametrization for primary proton:
-  // nu = 0.21155 * std::pow(delta, -0.16639) + 1.21803 * logAge;
-  // t1 = 4.513 * std::pow(delta, 0.45092) * std::pow(showerEnergyTeV, -0.008843) - 0.058687* logAge;
-  // t2 = t1 * (0.90725 + 0.41722 * showerAge);
-  // ep = 0.009528 + 0.022552 * std::pow(showerEnergyTeV, -0.4207);
+   nu = 0.21155 * std::pow(delta, -0.16639) + 1.21803 * logAge;
+   t1 = 4.513 * std::pow(delta, 0.45092) * std::pow(showerEnergyTeV, -0.008843) - 0.058687* logAge;
+   t2 = t1 * (0.90725 + 0.41722 * showerAge);
+   ep = 0.009528 + 0.022552 * std::pow(showerEnergyTeV, -0.4207);
 
   // Check parameter values
 
@@ -238,8 +291,8 @@ CherenkovParameters(const double showerAge,
     t1 = 1e-10;
   }
 
-  // We cannot have t2 < t1 because, if we did, our density function would grow
-  // as propto exp(theta) for large values of theta. Thus, we establish t2 >= t1
+  // We cannot have t2 < t1 because if we did our density function would grow
+  // as ~exp(theta) for large values of theta. Thus, we establish t2 >= t1
   if (t2 < t1) {
     t2 = t1;
   }
