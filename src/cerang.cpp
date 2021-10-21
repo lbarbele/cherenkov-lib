@@ -1,4 +1,5 @@
 #include "cerang.h"
+#include "constants.h"
 
 #include <cmath>
 #include <iostream>
