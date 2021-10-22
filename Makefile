@@ -3,14 +3,13 @@ OBJDIR := obj
 BINDIR := bin
 
 CXXFLAGS += -I$(SRCDIR) -fpic `root-config --cflags`
-LDFLAGS += `root-config --libs`
+LDFLAGS += `root-config --libs` -lgsl -lcblas -lm
 
-DEPS = $(addprefix $(OBJDIR)/, cherenkov-angular.o)
+DEPS = $(addprefix $(OBJDIR)/, cherenkov-angular.o cherenkov-longi.o)
 
 vpath %.cpp $(SRCDIR) # search for .cpp files under $(SRCDIR) 
 vpath %.h $(SRCDIR)   # search for .h files under $(SRCDIR) 
 vpath %.o $(OBJDIR)   # search for .o files under $(OBJDIR) 
-#vpath % $(BINDIR)     # search for anything onde $(BINDIR)
 
 .PHONY: lib demo clean
 
