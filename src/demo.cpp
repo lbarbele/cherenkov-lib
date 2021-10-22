@@ -10,7 +10,7 @@
 #include <TGraph.h>
 #include <TLegend.h>
 
-#include "cerang.h"
+#include <cerang.h>
 
 int main(void) {
 

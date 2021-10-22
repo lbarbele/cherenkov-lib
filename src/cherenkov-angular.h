@@ -2,29 +2,33 @@
 
 #include <cmath>
 
-enum class ParticleType {
-	Proton,
-	Gamma
-};
+enum class ParticleType;
 
-double
-CherenkovPDF(const double theta,
-             const double showerAge,
-             const double refractiveIndex,
-             const double showerEnergyTeV,
-             const ParticleType primaryParticle);
-             
-double
-CherenkovCDF(const double theta,
-             const double showerAge,
-             const double refractiveIndex,
-             const double showerEnergyTeV,
-             const ParticleType primaryParticle);
-             
-double
-CherenkovIntegral(const double lowAngle,
-                  const double highAngle,
-                  const double showerAge,
-                  const double refractiveIndex,
-                  const double showerEnergyTeV,
-                  const ParticleType primaryParticle);
+namespace Cherenkov {
+	namespace Angular {
+		double
+		PDF(
+			const double theta,
+			const double showerAge,
+			const double refractiveIndex,
+			const double showerEnergyTeV,
+			const ParticleType primaryParticle);
+				         
+		double
+		CDF(
+			const double theta,
+			const double showerAge,
+			const double refractiveIndex,
+			const double showerEnergyTeV,
+			const ParticleType primaryParticle);
+				         
+		double
+		Integral(
+			const double lowAngle,
+			const double highAngle,
+			const double showerAge,
+			const double refractiveIndex,
+			const double showerEnergyTeV,
+			const ParticleType primaryParticle);
+	}
+}
