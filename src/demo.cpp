@@ -10,7 +10,7 @@
 #include <TGraph.h>
 #include <TLegend.h>
 
-#include <cerang.h>
+#include <cherenkov-angular.h>
 
 int main(void) {
 
@@ -63,7 +63,7 @@ int main(void) {
 	for (double theta = 0.5*dTheta; theta < maxTheta; theta += dTheta) {
 		// Compute the parametrized function for the current value of theta
 		// Use the values of shower age, refractive index, and shower energy defined above
-		double functionValue = CherenkovPDF(theta, showerAge, refractiveIndex, showerEnergyTeV, ParticleType::Proton);
+		double functionValue = Cherenkov::Angular::PDF(theta, showerAge, refractiveIndex, showerEnergyTeV, ParticleType::Proton);
 		                       ////////////
 		
 		// Fill the TGraph for the parametrized function

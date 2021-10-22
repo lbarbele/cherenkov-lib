@@ -10,19 +10,19 @@ DEPS = $(addprefix $(OBJDIR)/, cherenkov-angular.o)
 vpath %.cpp $(SRCDIR) # search for .cpp files under $(SRCDIR) 
 vpath %.h $(SRCDIR)   # search for .h files under $(SRCDIR) 
 vpath %.o $(OBJDIR)   # search for .o files under $(OBJDIR) 
-vpath % $(BINDIR)     # search for anything onde $(BINDIR)
+#vpath % $(BINDIR)     # search for anything onde $(BINDIR)
 
 .PHONY: lib demo clean
 
-lib: libcerang.so
+lib: $(BINDIR)/libcerang.so
 
 clean: 
 	rm -rvf *.o bin obj
 	
-libcerang.so: $(DEPS) | $(BINDIR)
-	$(CXX) $(LDFLAGS) -shared $^ -o $(BINDIR)/$@
+$(BINDIR)/libcerang.so: $(DEPS) | $(BINDIR)
+	$(CXX) $(LDFLAGS) -shared $^ -o $@
 	
-demo: $(OBJDIR)/demo.o libcerang.so
+demo: $(OBJDIR)/demo.o $(BINDIR)/libcerang.so
 	$(CXX) $(LDFLAGS) $^ -o $(BINDIR)/$@
 	
 $(OBJDIR)/%.o: %.cpp %.h | $(OBJDIR)

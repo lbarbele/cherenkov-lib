@@ -51,13 +51,8 @@ namespace {
 
 
 //
-// Things declared in cherenkov-angular.h
+// Functions declared in cherenkov-angular.h
 //
-enum class ParticleType {
-	Proton,
-	Gamma
-};
-
 double
 Cherenkov::Angular::PDF(
 	const double theta,

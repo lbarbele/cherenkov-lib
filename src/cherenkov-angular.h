@@ -2,7 +2,10 @@
 
 #include <cmath>
 
-enum class ParticleType;
+enum class ParticleType {
+	Proton,
+	Gamma
+};
 
 namespace Cherenkov {
 	namespace Angular {
