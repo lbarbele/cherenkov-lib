@@ -14,6 +14,7 @@ vpath %.o $(OBJDIR)   # search for .o files under $(OBJDIR)
 .PHONY: lib demo clean
 
 lib: $(BINDIR)/libcerang.so
+demo: $(BINDIR)/demo
 
 clean: 
 	rm -rvf *.o bin obj
@@ -21,14 +22,11 @@ clean:
 $(BINDIR)/libcerang.so: $(DEPS) | $(BINDIR)
 	$(CXX) $(LDFLAGS) -shared $^ -o $@
 	
-demo: $(OBJDIR)/demo.o $(BINDIR)/libcerang.so
-	$(CXX) $(LDFLAGS) $^ -o $(BINDIR)/$@
-	
-$(OBJDIR)/%.o: %.cpp %.h | $(OBJDIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-	
+$(BINDIR)/%: $(OBJDIR)/%.o $(BINDIR)/libcerang.so
+	$(CXX) $(LDFLAGS) $^ -o $@
+
 $(OBJDIR)/%.o: %.cpp | $(OBJDIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@	
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 	
 $(OBJDIR):
 	mkdir $(OBJDIR)
