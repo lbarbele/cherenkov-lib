@@ -48,7 +48,7 @@ namespace {
 	
 	// Input variables
 	double _showerAge(-1), _refractiveIndex(-1), _showerEnergyTeV(-1);
-	ParticleType _primaryParticle;
+	ParticleType _primaryParticle(ParticleType::Proton);
 	
 	// Compound quantities
 	double _thetaEm(0), _normalization(0);
@@ -71,7 +71,7 @@ Cherenkov::Angular::PDF(
 	const ParticleType primaryParticle)
 {
   // Check if theta is outside the range within which the function is defined
-  if (0 <= theta || theta >= Constants::MaxTheta) {
+  if (theta <= 0 || theta >= Constants::MaxTheta) {
     return 0;
   }
   
@@ -168,25 +168,12 @@ namespace {
 		_showerEnergyTeV = showerEnergyTeV;
 		_primaryParticle = primaryParticle;
 
-		// Compute auxiliar quantities (local)
-		double delta = refractiveIndex - 1.0;
-		double logAge = std::log(showerAge);
+		// Compute auxiliar quantities
+		double delta = _refractiveIndex - 1.0;
+		double logAge = std::log(_showerAge);
 		
-		// Compute compound quantities (global)
-		_thetaEm = std::acos(1.0/_refractiveIndex);
-		_normalization = UnnormalizedIntegral(0.0, Constants::MaxTheta);
-		_cosThetaEm = 1.0/_refractiveIndex; // used in SmallAngleIntegral
-		_sinThetaEm = std::sqrt(delta*(1.0+_refractiveIndex))/_refractiveIndex; // used in SmallAngleIntegral
-		_seriesCoefficient[0] = _cosThetaEm;
-		_seriesCoefficient[1] = _sinThetaEm;
-		_seriesCoefficient[2] = -_cosThetaEm;
-		_seriesCoefficient[3] = -_sinThetaEm;
-		_r1 = _thetaEm * _w1; // used in LargeAngleIntegral
-		_r2 = _thetaEm * _w2; // used in LargeAngleIntegral
-		_powThetaEmNu = std::pow(_thetaEm, _nu); // used in LargeAngleIntegral
-		
+		// Compute new values for the parametrized parameters
 		switch(primaryParticle) {
-		
 			// Parametrization for a primary proton
 			case ParticleType::Proton:
 				_nu = 0.21155 * std::pow(delta, -0.16639) + 1.21803 * logAge;
@@ -194,7 +181,6 @@ namespace {
 				_w2 = _w1 * (1.0 -  1.0 / (0.90725 + 0.41722 * showerAge));
 				_ep = 0.009528 + 0.022552 * std::pow(showerEnergyTeV, -0.4207);
 				break;
-				
 			// Parametrization for a primary gamma		
 			case ParticleType::Gamma:
 				_nu = 0.34329 * std::pow(delta, -0.10683) + 1.46852 * logAge;
@@ -202,7 +188,6 @@ namespace {
 				_w2 = _w1 * (1.0 - 1.0 / (0.95734 + 0.26472 * showerAge));
 				_ep = 0.0031206;
 				break;
-				
 		}
 
 		// Avoid negative values for w1 and w2
@@ -213,8 +198,21 @@ namespace {
 		if (_w2 < 0) {
 			_w2 = 0;
 		}
-	
-		// Done!
+		
+		// (global) Quantities depending only on the refractive index
+		_thetaEm = std::acos(1.0/_refractiveIndex);
+		_cosThetaEm = 1.0/_refractiveIndex;
+		_sinThetaEm = std::sqrt(delta*(1.0+_refractiveIndex))/_refractiveIndex;
+		_seriesCoefficient[0] = _cosThetaEm;
+		_seriesCoefficient[1] = _sinThetaEm;
+		_seriesCoefficient[2] = - _cosThetaEm;
+		_seriesCoefficient[3] = - _sinThetaEm;
+		
+		// (global) Compound quantities depending on the parametrized parameters
+		_powThetaEmNu = std::pow(_thetaEm, _nu);
+		_r1 = _thetaEm * _w1;
+		_r2 = _thetaEm * _w2;
+		_normalization = UnnormalizedIntegral(0.0, Constants::MaxTheta);
 	}
 
 	double
@@ -249,14 +247,12 @@ namespace {
 		double integral = 0;
 
 		// Avoid the computation of 0*log(0)
-		// TODO: use approximation
 		if (deltaLow > 1e-20) {
 		  integral += (std::cos(lowAngle) - _cosThetaEm) 
 		    * (Constants::Pi - std::log(deltaLow/_thetaEm));
 		} 
 
 		// Avoid the computation of 0*log(0)
-		// TODO: use approximation
 		if (deltaHigh > 1e-20) {
 		  integral -= (std::cos(highAngle) - _cosThetaEm)
 		    * (Constants::Pi - std::log(deltaHigh/_thetaEm));
