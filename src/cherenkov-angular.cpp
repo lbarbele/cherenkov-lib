@@ -3,9 +3,13 @@
 
 #include <cmath>
 
-//
+// TODO remove this
+#include <iostream>
+#include <iomanip>
+
+
 // Helper functions (prototypes) - only available within this file
-//
+
 namespace {
 	inline
 	void
@@ -202,7 +206,7 @@ namespace {
 		// (global) Quantities depending only on the refractive index
 		_thetaEm = std::acos(1.0/_refractiveIndex);
 		_cosThetaEm = 1.0/_refractiveIndex;
-		_sinThetaEm = std::sqrt(delta*(1.0+_refractiveIndex))/_refractiveIndex;
+		_sinThetaEm = std::sqrt((_refractiveIndex-1.0)*(1.0+_refractiveIndex))/_refractiveIndex;
 		_seriesCoefficient[0] = _cosThetaEm;
 		_seriesCoefficient[1] = _sinThetaEm;
 		_seriesCoefficient[2] = - _cosThetaEm;
@@ -285,62 +289,32 @@ namespace {
 		// proportional to stepSize^4
 		// TODO: make this value adjustable
 		static const double defaultStepSize = 5e-4;
-
-		// Auxiliary parameters
-		const double rRight = _thetaEm / lowAngle;
-		const double rLeft = _thetaEm / highAngle;
-
-		// Compute number of steps by ensuring that stepSize <= defaultStepSize, but close to it
-		int numberOfSteps = 1 + (rRight - rLeft) / defaultStepSize;
-		double stepSize = (rRight - rLeft) / double(numberOfSteps);
-		double halfStep = 0.5*stepSize;
-
-		// Auxiliary function: computes x*(pi + 1 - log(x)), taking care of values close to 0 (assumes x >= 0)
-		auto xPiPlusOneLogx = [](const double x)->double{
-			// If x is too close to 0, we expand x*log(x) in a Taylor series and take the first order term only
-		  // That is: x*log(x) ~ x^x - 1
-		  // In this way we ensure that the function is always finite, because the C++ standard defines x^0 = 1,
-		  // whatever the value of 0 (even NaN).
-			if (x <= 1e-10) {
-				return Constants::PiPlusOne * x + 1.0 - std::pow(x, x);
-			} else {
-				return x * (Constants::PiPlusOne - std::log(x));
-			}
-		};
-
-		// Auxiliary function that computes the integrand
-		auto integrand = [&](const double & r)->double{
-		  double value = 0;
-		  value += (_nu + 1.0 - _r1/r) * std::exp(-_r1/r);
-		  value += _ep * (_nu + 1.0 - _r2/r) * std::exp(-_r2/r);
-		  value *= xPiPlusOneLogx(1.0-r);
-		  value /= std::pow(r, _nu + 2.0);
-		  return value;
-		};
-
-		// Initial value for the integral
-		double integral = 0;
 		
-		// This is composite Simpson's rule for the integral that doesn't have a closed form expression
+		const double tLeft = std::sqrt(1 - _thetaEm/lowAngle);
+		const double tRight = std::sqrt(1 - _thetaEm/highAngle);
+		
+		int numberOfSteps = 1 + (tRight - tLeft) / defaultStepSize;
+		double stepSize = (tRight - tLeft) / double(numberOfSteps);
+		
+		auto integrand = [](const double & t)->double{
+			double v = (1.0-t)*(1.0+t);
+			double value = std::exp(-_r1/v) + _ep * std::exp(-_r2/v);
+			value *= t <= 1e-10 ?
+				Constants::Pi * t + 1.0 - std::pow(t, t)
+				: t * (Constants::Pi*0.5 - std::log(t));
+			value /= std::pow(v, _nu + 1);
+			return value;
+		};
+		
+		double integral = 0;
 		for (int iStep = 0; iStep < numberOfSteps; iStep++) {
 			integral +=
-			  integrand(rLeft + iStep * stepSize)
-				+ 2.0 * integrand(rLeft + (2.0*iStep + 1.0) * halfStep);
+				integrand(tLeft + iStep * stepSize)
+				+ 2.0 * integrand(tLeft + (iStep + 0.5)*stepSize);
 		}
-		integral = - ( 2.0 * integral + integrand(rRight) - integrand(rLeft) ) * stepSize / 6.0;
+		integral = ( 2.0 * integral + integrand(tRight) - integrand(tLeft) ) * stepSize / 6.0;
+		integral *= 4 * _powThetaEmNu;
 		
-		// Below terms are from the integral by parts we did to reach a finite integrate for all r
-		integral += xPiPlusOneLogx(1.0 - rLeft)
-			* (std::exp(-_r1/rLeft) + _ep*std::exp(-_r2/rLeft))
-			/ std::pow(rLeft, _nu + 1.0);
-			
-		integral -= xPiPlusOneLogx(1.0 - rRight)
-			* (std::exp(-_r1/rRight) + _ep*std::exp(-_r2/rRight))
-			/ std::pow(rRight, _nu + 1.0);
-
-		// This factor comes after the change of variables theta -> r = thetaEm / theta
-		integral *= _powThetaEmNu;
-
 		return integral;
 	}
 
