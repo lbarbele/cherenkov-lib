@@ -141,21 +141,22 @@ namespace {
     const double showerEnergyTeV,
     const ParticleType primaryParticle)
 	{
-		// we do not check input parameters here! that is, it is assumed that:
-		//
-		// 0 < showerAge < 3 (a value of 0 would make log(s) diverge, 3 is unphysical)
-		// 1.0 < refractiveIndex (pow() will return NaN if refractiveIndex = 1)
-		// showerEnergy > 0 (pow() of showerEnergy = 0 is also NaN)
-		//
-		// during tests, we ensure that output is correct if the above bounds are respected
-		
-		// the output of this function is a modified version of the original parameters,
-		// changes are made for numerical convenience
+		// This fuction computes a modified version of the original parameter set:
 		//
 		// nu (same as in the paper)
 		// w1 = 1/t1 (inverse of theta_1)
 		// w2 = (t2-t1)/(t1*t2) (also modified)
 		// ep (same as in the paper)
+		//
+		// Values of showerAge and refractive index are truncated to the following intervals:
+		//
+		// 0.5 <= showerAge <= 1.5
+		// 3.0 x 10^(-5) <= refractiveIndex - 1
+		//
+		// With this, it is ensured that w1 and w2 are not too large (so exponentials do not result
+		// in underflow) and also that w1,w2 > 0.
+		//
+		// In the computation of thetaEm and its sines, no restriction is put on refractiveIndex
 		
 		// Check if the input varibles have changed. If not, there is no need to update the parameters
 		if (showerAge == _showerAge
@@ -173,36 +174,28 @@ namespace {
 		_primaryParticle = primaryParticle;
 
 		// Compute auxiliar quantities
-		double delta = _refractiveIndex - 1.0;
-		double logAge = std::log(_showerAge);
+		double delta = std::max(_refractiveIndex - 1.0, 3e-5); // bounded to 1e-5!
+		double s = std::max(0.5, std::min(_showerAge, 1.5));
+		double logs = std::log(s);
 		
 		// Compute new values for the parametrized parameters
 		switch(primaryParticle) {
 			// Parametrization for a primary proton
 			case ParticleType::Proton:
-				_nu = 0.21155 * std::pow(delta, -0.16639) + 1.21803 * logAge;
-				_w1 = 1.0 / (4.513 * std::pow(delta, 0.45092) * std::pow(showerEnergyTeV, -0.008843) - 0.058687* logAge);
-				_w2 = _w1 * (1.0 -  1.0 / (0.90725 + 0.41722 * showerAge));
+				_nu = 0.21155 * std::pow(delta, -0.16639) + 1.21803 * logs;
+				_w1 = 1.0 / (4.513 * std::pow(delta, 0.45092) * std::pow(showerEnergyTeV, -0.008843) - 0.058687* logs);
+				_w2 = _w1 * (1.0 -  1.0 / (0.90725 + 0.41722 * s));
 				_ep = 0.009528 + 0.022552 * std::pow(showerEnergyTeV, -0.4207);
 				break;
 			// Parametrization for a primary gamma		
 			case ParticleType::Gamma:
-				_nu = 0.34329 * std::pow(delta, -0.10683) + 1.46852 * logAge;
-				_w1 = 1.0 / (1.4053 * std::pow(delta, 0.32382) - 0.048841 * logAge);
-				_w2 = _w1 * (1.0 - 1.0 / (0.95734 + 0.26472 * showerAge));
+				_nu = 0.34329 * std::pow(delta, -0.10683) + 1.46852 * logs;
+				_w1 = 1.0 / (1.4053 * std::pow(delta, 0.32382) - 0.048841 * logs);
+				_w2 = _w1 * (1.0 - 1.0 / (0.95734 + 0.26472 * s));
 				_ep = 0.0031206;
 				break;
 		}
 
-		// Avoid negative values for w1 and w2
-		if (_w1 < 0) {
-			_w1 = 0;
-		}
-		
-		if (_w2 < 0) {
-			_w2 = 0;
-		}
-		
 		// (global) Quantities depending only on the refractive index
 		_thetaEm = std::acos(1.0/_refractiveIndex);
 		_cosThetaEm = 1.0/_refractiveIndex;
