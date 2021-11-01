@@ -112,7 +112,7 @@ Cherenkov::Angular::Integral(
 {
 	// Check input angles
 	if (lowAngle > highAngle) {
-		return -Cherenkov::Angular::Integral(highAngle, lowAngle, showerAge, refractiveIndex, showerEnergyTeV, primaryParticle);
+		return Cherenkov::Angular::Integral(highAngle, lowAngle, showerAge, refractiveIndex, showerEnergyTeV, primaryParticle);
 	} else if (highAngle <= 0 || lowAngle >= Constants::MaxTheta) {
 		return 0;
 	} 
