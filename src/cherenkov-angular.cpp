@@ -3,11 +3,6 @@
 
 #include <cmath>
 
-// TODO remove this
-#include <iostream>
-#include <iomanip>
-
-
 // Helper functions (prototypes) - only available within this file
 
 namespace {
@@ -293,20 +288,18 @@ namespace {
 			double v = (1.0-t)*(1.0+t);
 			double value = std::exp(-_r1/v) + _ep * std::exp(-_r2/v);
 			value *= t <= 1e-10 ?
-				Constants::Pi * t + 1.0 - std::pow(t, t)
-				: t * (Constants::Pi*0.5 - std::log(t));
-			value /= std::pow(v, _nu + 1);
+				Constants::HalfPi * t + 1.0 - std::pow(t, t)
+				: t * (Constants::HalfPi - std::log(t));
+			value *= std::pow(v, -(_nu + 1));
 			return value;
 		};
 		
 		double integral = 0;
 		for (int iStep = 0; iStep < numberOfSteps; iStep++) {
-			integral +=
-				integrand(tLeft + iStep * stepSize)
-				+ 2.0 * integrand(tLeft + (iStep + 0.5)*stepSize);
+			integral +=	integrand(tLeft + iStep * stepSize)	+ 2.0 * integrand(tLeft + (iStep + 0.5)*stepSize);
 		}
 		integral = ( 2.0 * integral + integrand(tRight) - integrand(tLeft) ) * stepSize / 6.0;
-		integral *= 4 * _powThetaEmNu;
+		integral *= 4.0 * _powThetaEmNu;
 		
 		return integral;
 	}
