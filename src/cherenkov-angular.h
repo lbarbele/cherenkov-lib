@@ -6,17 +6,10 @@
 
 #pragma once
 
+#include <particle-type.h>
+
 #include <cmath>
 #include <iostream>
-
-/**
- * @enum mapper::ParticleType
- * @brief Enumeration of primary particle types.
- */
-enum class ParticleType {
-	Proton,
-	Gamma
-};
 
 /**
  * @brief Namespace Cherenkov
