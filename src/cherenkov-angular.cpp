@@ -223,12 +223,6 @@ namespace {
 		// We do not check values of the input parameters here! It is required that:
 		// 0 <= lowAngle,highAngle <= thetaEm <= pi
 		
-		// Auxiliar function
-		auto Approximation = [&](const double x)->double {
-			return (x * (Constants::Pi + std::log(_thetaEm)) + std::pow(x,x) - 1.0)
-			  * (_sinThetaEm - 0.5*x*_cosThetaEm);
-		};
-		
 		// TODO: make this value adjustable
 		static const int numberOfTerms = 10;
 
