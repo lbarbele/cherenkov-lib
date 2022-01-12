@@ -14,6 +14,4 @@ namespace Constants {
 	inline constexpr double PiPlusOne = Pi + 1.0; ///< Pi plus 1
 	inline constexpr double AlphaEm = 0.0072973525693; ///< Fine-structure constant
 	inline constexpr double ElectronMass = 0.51099895; ///< Electron mass in MeV
-	
-	inline constexpr double MaxTheta = Pi/3.0; ///< Pi over 2
 }

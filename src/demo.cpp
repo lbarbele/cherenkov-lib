@@ -1,7 +1,9 @@
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <memory>
 #include <cmath>
+#include <array>
 
 #include <TH1.h>
 #include <TH2.h>
@@ -11,9 +13,11 @@
 #include <TLegend.h>
 
 #include <cherenkov-angular.h>
+#include <constants.h>
+
 
 int main(void) {
-
+	
 	//
 	// 1. Get MC data from .root file and prepare it
 	//
@@ -23,7 +27,7 @@ int main(void) {
 
 	// Get the histogram for s = 1 (atmospheric slice number 12)
 	// Scale the histogram and set its graphical properties
-	auto thetaHistPtr = std::unique_ptr<TH1>( dataFile.Get<TH1>("hTheta_12") );
+	auto thetaHistPtr = std::unique_ptr<TH1>( dataFile.Get<TH1>("hTheta_16") );
 	
 	thetaHistPtr->Scale(1.0/thetaHistPtr->Integral("width"));
 	
@@ -34,8 +38,8 @@ int main(void) {
 	auto refractiveIndexHistPtr = std::unique_ptr<TH1>( dataFile.Get<TH1>("refractiveIndex") );
 	auto showerAgeHistPtr = std::unique_ptr<TH1>( dataFile.Get<TH1>("showerAge") );
 	
-	double refractiveIndex = refractiveIndexHistPtr->GetBinContent(12);
-	double showerAge = showerAgeHistPtr->GetBinContent(12);
+	double refractiveIndex = refractiveIndexHistPtr->GetBinContent(16);
+	double showerAge = showerAgeHistPtr->GetBinContent(16);
 	
 	// Shower energy is 1 PeV, and we write it in units of TeV
 	double showerEnergyTeV = 1e3;
@@ -59,19 +63,17 @@ int main(void) {
 	functionGraph.SetLineWidth(2);
 	functionGraph.SetLineColorAlpha(kRed,0.7);
 	
+	// Actually create the angular distribution
+	Cherenkov::AngularDistribution angularDistribution(1e3/*TeV*/, ParticleType::Proton);
+	
 	// Loop between min/max theta to fill the TGraph
 	for (double theta = 0.5*dTheta; theta < maxTheta; theta += dTheta) {
 		// Compute the parametrized function for the current value of theta
 		// Use the values of shower age, refractive index, and shower energy defined above
-		double functionValue = Cherenkov::Angular::PDF(theta, showerAge, refractiveIndex, showerEnergyTeV, ParticleType::Proton);
-		                       ////////////
+		double functionValue = angularDistribution.PDF(theta, showerAge, refractiveIndex);
 		
 		// Fill the TGraph for the parametrized function
 	 	functionGraph.SetPoint(functionGraph.GetN(), theta, functionValue);
-	 	
-	 	// Note there are other two functions that may be useful:
-	 	// CherenkovCDF: computes the cumulative distribution
-	 	// CherenkovIntegral: computes the integral of the PDF between given values of theta_min and theta_max
 	}
 	
 	
@@ -122,5 +124,5 @@ int main(void) {
 	canvas.Print("demo.pdf");
 	
 
-	return 0;	
+	return 0;
 }
